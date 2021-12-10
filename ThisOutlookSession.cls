@@ -1,15 +1,7 @@
-VERSION 1.0 CLASS
-BEGIN
-  MultiUse = -1  'True
-END
-Attribute VB_Name = "ThisOutlookSession"
-Attribute VB_GlobalNameSpace = False
-Attribute VB_Creatable = False
-Attribute VB_PredeclaredId = True
-Attribute VB_Exposed = True
 
-' Variablen die evtl. in Sub angepasst werden müssen:
+' Variablen die evtl. in Sub angepasst werden mÃ¼ssen:
 Dim sSubject As String
+Dim beschreibung As String
 Dim sLocation As String
 Dim iDuration As Integer
 Dim iXth As Integer
@@ -33,6 +25,10 @@ Dim error
 ' Initialisierung - 1. des derzeitigen Monats
 iDay = 1
 
+'Userform leeren
+UserForm1.titelBox = ""
+UserForm1.TextBox1 = ""
+
 UserForm1.Show
 
 iXth = UserForm1.ComboTag.Value
@@ -42,7 +38,7 @@ If iMonth = "Januar" Then
     iMonth = 1
 ElseIf iMonth = "Februar" Then
     iMonth = 2
-ElseIf iMonth = "März" Then
+ElseIf iMonth = "MÃ¤rz" Then
     iMonth = 3
 ElseIf iMonth = "April" Then
     iMonth = 4
@@ -74,6 +70,7 @@ iYear = UserForm1.ComboJahr.Value
 oDate = CDate(iXth & "." & iMonth & "." & iYear)
 
 sSubject = UserForm1.titelBox.Value
+beschreibung = UserForm1.TextBox1.Value
 iBeginn = UserForm1.ComboBeginn.Value
 iEnde = UserForm1.ComboEnde.Value
 iAmount = UserForm1.AnzahlTermine.Value
@@ -95,6 +92,7 @@ Set myItem = myOlApp.CreateItem(olAppointmentItem)
 
 myItem.MeetingStatus = olMeeting
 myItem.Subject = sSubject
+myItem.Body = beschreibung
 
 oDateTmp = DateAdd("m", i, oDate)
 If ((Mid(oDateTmp, 4, 2) = 1 Or Mid(oDateTmp, 4, 2) = 3 Or Mid(oDateTmp, 4, 2) = 5 Or Mid(oDateTmp, 4, 2) = 7 _
@@ -118,8 +116,6 @@ End If
 
 oDateTmp = CDate(iXth & "." & iMonth & "." & iYear)
 
-'oDateTmp = CDate(iXth & "." & iMonth & "." & iYear)
-
 getXthWorkingDay oDateTmp, iXth
 
 myItem.Start = CStr(oDateTmp) & " " & iBeginn & ":00 AM"
@@ -132,6 +128,9 @@ Next i
 ' error = MsgBox("Fehler", vbOKOnly, "Error")
 'Exit Sub
 
+UserForm2.Show
+
+
 End Sub
 
 Private Sub getXthWorkingDay(oDate, iX)
@@ -142,24 +141,46 @@ Dim oDayOfWeek
     oDateTmp = oDate
     oDayOfWeek = Format(oDateTmp, "dddd")
     datumTag = CInt(Mid(oDateTmp, 1, 2))
-If (datumTag = 30 Or datumTag = 31) Then
-    If oDayOfWeek = "Samstag" Then
+    
+    
+'Wenn Termin Kalendertagsbezogen ist, wird der Termin vorgezogen
+ If (UserForm1.CheckBox1.Value = True) Then
+  If oDayOfWeek = "Samstag" Then
             oDateTmp = oDateTmp - 1 'Springt auf den Freitag
     ElseIf oDayOfWeek = "Sonntag" Then
             oDateTmp = oDateTmp - 2 'Springt auf den Freitag
     Else: oDateTmp = oDateTmp ' Bleibt
         End If
-End If
+ End If
+ 
+ 
+'Wenn Termin Arbeitstagsbezogen ist und am letzten AT des Monats ist,
+'wird der Termin vorgezogen
+If (UserForm1.CheckBox1.Value = False) Then
 
-If Not (datumTag = 30 Or datumTag = 31) Then
-    If oDayOfWeek = "Samstag" Then
-            oDateTmp = oDateTmp + 2 'Springt auf den Montag
-    ElseIf oDayOfWeek = "Sonntag" Then
-            oDateTmp = oDateTmp + 1 'Springt auf den Montag
-    Else: oDateTmp = oDateTmp ' Bleibt
-        End If
+    If (datumTag = 30 Or datumTag = 31) Then
+        If oDayOfWeek = "Samstag" Then
+                oDateTmp = oDateTmp - 1 'Springt auf den Freitag
+        ElseIf oDayOfWeek = "Sonntag" Then
+                oDateTmp = oDateTmp - 2 'Springt auf den Freitag
+        Else: oDateTmp = oDateTmp ' Bleibt
+            End If
+    End If
+    
+    'Wenn Termin Arbeitstagsbezogen ist und am ersten AT des Monats ist,
+    'wird der Termin vorgezogen
+    If Not (datumTag = 30 Or datumTag = 31) Then
+        If oDayOfWeek = "Samstag" Then
+                oDateTmp = oDateTmp + 2 'Springt auf den Montag
+        ElseIf oDayOfWeek = "Sonntag" Then
+                oDateTmp = oDateTmp + 1 'Springt auf den Montag
+        Else: oDateTmp = oDateTmp ' Bleibt
+            End If
+    End If
 End If
 
 oDate = oDateTmp
 
 End Sub
+
+
